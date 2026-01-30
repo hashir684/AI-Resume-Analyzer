@@ -1,22 +1,26 @@
 import os
+import logging
 import pdfplumber
 from docx import Document
+
+logging.basicConfig(level=logging.INFO)
 
 
 def extract_text_pdf(pdf_path):
     """
-    Extract text from a PDF resume.
+    Extract text from a PDF file.
 
     Args:
         pdf_path (str): Path to the PDF file.
 
     Returns:
-        str: Extracted text from the PDF.
+        str: Extracted text.
     """
     text = ""
 
     with pdfplumber.open(pdf_path) as pdf:
-        print(f"[INFO] PDF pages detected: {len(pdf.pages)}")
+        logging.info(f"PDF pages detected: {len(pdf.pages)}")
+
         for page in pdf.pages:
             page_text = page.extract_text()
             if page_text:
@@ -27,47 +31,56 @@ def extract_text_pdf(pdf_path):
 
 def extract_text_doc(doc_path):
     """
-    Extract text from a DOCX resume.
+    Extract text from a DOCX file.
 
     Args:
         doc_path (str): Path to the DOCX file.
 
     Returns:
-        str: Extracted text from the DOCX.
+        str: Extracted text.
     """
     text = ""
 
     doc = Document(doc_path)
-    print(f"[INFO] DOCX paragraphs detected: {len(doc.paragraphs)}")
+    logging.info(f"DOCX paragraphs detected: {len(doc.paragraphs)}")
 
     for para in doc.paragraphs:
-        text += para.text + "\n"
+        if para.text.strip():
+            text += para.text + "\n"
 
     return text.strip()
 
 
 def extract_resume_text(file_path):
     """
-    Detect resume file type and extract text accordingly.
+    Detect file type and extract text accordingly.
 
     Args:
-        file_path (str): Path to resume file (PDF or DOCX).
+        file_path (str): Path to PDF or DOCX file.
 
     Returns:
-        str: Extracted resume text.
+        str: Extracted text.
 
     Raises:
-        ValueError: If unsupported file format is provided.
+        ValueError: If file format is unsupported or text is empty.
     """
+
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"File not found: {file_path}")
 
     name, ext = os.path.splitext(file_path)
     ext = ext.lower()
 
-    print(f"[INFO] Detected file type: {ext}")
+    logging.info(f"Detected file type: {ext}")
 
     if ext == ".pdf":
-        return extract_text_pdf(file_path)
+        text = extract_text_pdf(file_path)
     elif ext == ".docx":
-        return extract_text_doc(file_path)
+        text = extract_text_doc(file_path)
     else:
         raise ValueError("Unsupported file format. Only PDF and DOCX allowed.")
+
+    if not text.strip():
+        raise ValueError("No text could be extracted from the file.")
+
+    return text
