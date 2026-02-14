@@ -1,7 +1,10 @@
 from langchain_community.llms import Ollama
-from langchain_core.prompts import PromptTemplate
 
-llm = Ollama(model="tinyllama")
+llm = Ollama(
+    model="tinyllama",
+    num_predict=400,      
+    temperature=0.5       
+)
 
 
 def generate_ai_feedback(analysis: dict) -> str:
@@ -15,47 +18,41 @@ def generate_ai_feedback(analysis: dict) -> str:
         str: AI-generated feedback text
     """
 
-    prompt_template = PromptTemplate(
-        input_variables=[
-            "final_score",
-            "skill_score",
-            "tfidf_score",
-            "matched_skills",
-            "missing_skills"
-        ],
-        template="""
-You are an experienced technical recruiter and resume reviewer.
+    matched_skills = ", ".join(analysis["matched_skills"]) if analysis["matched_skills"] else "None"
+    missing_skills = ", ".join(analysis["missing_skills"]) if analysis["missing_skills"] else "None"
 
-Resume analysis results:
-- Final Score: {final_score}%
-- Skill Match Score: {skill_score}%
-- Text Similarity Score: {tfidf_score}%
+    prompt = f"""You are a recruiter. Review this resume:
 
-Matched Skills:
-{matched_skills}
+Score: {analysis['final_score']}%
+Has: {matched_skills}
+Missing: {missing_skills}
 
-Missing Skills:
-{missing_skills}
+Write professional feedback:
 
-Tasks:
-1. Briefly explain the strengths of the resume
-2. Identify weak areas
-3. Suggest 2–3 concrete improvements
+STRENGTHS:
+[2-3 sentences about their skills]
 
-Rules:
-- Do NOT invent skills
-- Base your response ONLY on the provided data
-- Keep the tone professional and concise
-"""
-    )
+AREAS TO IMPROVE:
+[2-3 sentences about gaps]
 
-    prompt = prompt_template.format(
-        final_score=analysis["final_score"],
-        skill_score=analysis["skill_match_score"],
-        tfidf_score=analysis["tfidf_score"],
-        matched_skills=", ".join(analysis["matched_skills"]) or "None",
-        missing_skills=", ".join(analysis["missing_skills"]) or "None"
-    )
+RECOMMENDATIONS:
+1. [First action]
+2. [Second action]
+3. [Third action]"""
 
-    response = llm.invoke(prompt)  
-    return response.strip()
+    try:
+        response = llm.invoke(prompt)
+        
+        cleanup_keywords = ["You are a recruiter", "Score:", "Has:", "Missing:", "Write professional feedback"]
+        for keyword in cleanup_keywords:
+            if keyword in response:
+                parts = response.split(keyword)
+                response = parts[-1].strip()
+        
+        if len(response) < 30:
+            return "Unable to generate detailed feedback. Please try again."
+        
+        return response.strip()
+        
+    except Exception as e:
+        return f"Error generating AI feedback: {str(e)}"

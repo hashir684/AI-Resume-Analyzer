@@ -1,6 +1,7 @@
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 import shutil
 import os
+
 from resume import extract_resume_text
 from final_score import compute_final_score
 from llm_help import generate_ai_feedback  
@@ -12,7 +13,10 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
 @app.post("/analyze-resume/")
-async def analyze_resume(resume: UploadFile = File(...), job_description: str = Form(...) ):
+async def analyze_resume(
+    resume: UploadFile = File(...), 
+    job_description: str = Form(...)
+):
     """
     Analyze resume against job description and provide AI feedback.
     """
@@ -31,12 +35,18 @@ async def analyze_resume(resume: UploadFile = File(...), job_description: str = 
 
         resume_text = extract_resume_text(file_path)
         result = compute_final_score(resume_text, job_description)
-        ai_feedback = generate_ai_feedback(result)
+        
+        # Generate AI feedback
+        try:
+            ai_feedback = generate_ai_feedback(result)
+        except Exception as e:
+            print(f"AI feedback error: {e}")  # ← Debug print
+            ai_feedback = "AI feedback unavailable at this time"
 
         return {
             "filename": resume.filename,
             "analysis": result,
-            "AI_feedback": ai_feedback  
+            "ai_feedback": ai_feedback 
         }
 
     except Exception as e:
