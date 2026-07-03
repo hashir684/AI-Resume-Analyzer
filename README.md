@@ -18,6 +18,7 @@ An AI-powered Resume Analyzer that compares a candidate's resume with a job desc
 - Final weighted score  
 - AI feedback using TinyLlama (Ollama)  
 - FastAPI backend  
+- Streamlit for visuals
 
 ---
 
@@ -28,6 +29,7 @@ An AI-powered Resume Analyzer that compares a candidate's resume with a job desc
 - Scikit-learn
 - LangChain
 - Ollama (TinyLlama)
+- Streamlit
 - pdfplumber
 - python-docx
 - NLTK
