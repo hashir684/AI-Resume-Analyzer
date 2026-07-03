@@ -1,7 +1,7 @@
 import streamlit as st
 import requests
 
-API_URL = "http://127.0.0.1:8001/analyze-resume/"
+API_URL = "http://127.0.0.1:8000/analyze-resume/"
 
 st.set_page_config(
     page_title="AI Resume Analyzer",
